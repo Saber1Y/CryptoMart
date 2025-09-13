@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import address from '@/contracts/contractAddress.json'
-import abi from '@/artifacts/contracts/CryptoMart.sol/CryptoMart.json'
+import abi from '@/artifacts/contracts/CryptoMartProxy.sol/CryptoMart.json'
 import {
   ProductParams,
   ProductStruct,
@@ -59,23 +59,15 @@ const createProduct = async (params: ProductParams): Promise<void> => {
   try {
     const contract = await getEthereumContract()
 
-    const productInput = {
-      name: params.name,
-      description: params.description,
-      price: toWei(Number(params.price)),
-      stock: Number(params.stock),
-      colors: params.colors,
-      sizes: params.sizes || [],
-      images: params.images,
-      categoryId: Number(params.categoryId),
-      subCategoryId: Number(params.subCategoryId),
-      weight: Math.round(Number(params.weight) * 1000),
-      model: params.model || '',
-      brand: params.brand || '',
-      sku: Number(params.sku) || Date.now(),
-    }
-
-    const tx = await contract.createProduct(productInput)
+    // Our modular contract expects individual parameters
+    const tx = await contract.createProduct(
+      params.name,
+      params.description,
+      params.images[0] || '', // Use first image as main image
+      Number(params.categoryId),
+      toWei(Number(params.price)),
+      Number(params.stock)
+    )
     await tx.wait()
   } catch (error) {
     reportError(error)
@@ -90,22 +82,17 @@ const updateProduct = async (product: ProductParams): Promise<void> => {
   }
   try {
     const contract = await getEthereumContract()
-    const productInput = {
-      name: product.name,
-      description: product.description,
-      price: toWei(Number(product.price)),
-      stock: Number(product.stock),
-      colors: product.colors,
-      sizes: product.sizes || [],
-      images: product.images,
-      categoryId: product.categoryId,
-      subCategoryId: product.subCategoryId,
-      weight: Number(product.weight),
-      model: product.model || '',
-      brand: product.brand || '',
-      sku: Number(product.sku),
-    }
-    tx = await contract.updateProduct(product.id, productInput)
+
+    // Our modular contract expects individual parameters
+    tx = await contract.updateProduct(
+      product.id,
+      product.name,
+      product.description,
+      product.images[0] || '', // Use first image as main image
+      Number(product.categoryId),
+      toWei(Number(product.price)),
+      Number(product.stock)
+    )
     await tx.wait()
   } catch (error) {
     reportError(error)
@@ -137,7 +124,7 @@ const getProduct = async (productId: number): Promise<ProductStruct> => {
 const getMyProducts = async (): Promise<ProductStruct[]> => {
   try {
     const contract = await getEthereumContract()
-    const products = await contract.getSellerProducts(ethereum.selectedAddress)
+    const products = await contract.getMyProducts()
     return structureProduct(products)
   } catch (error) {
     reportError(error)
@@ -196,16 +183,11 @@ const buyProduct = async (
   try {
     const contract = await getEthereumContract()
 
-    const tx = await contract.buyProduct(
-      productId,
-      shippingDetails,
-      selectedColor || '',
-      selectedSize || '',
-      quantity,
-      {
-        value: toWei(price),
-      }
-    )
+    // Our modular contract only expects productId and value
+    // Additional details like shipping, color, size are handled off-chain or in events
+    const tx = await contract.buyProduct(productId, {
+      value: toWei(price),
+    })
     await tx.wait()
   } catch (error) {
     console.error('Buy product error:', error)
@@ -338,20 +320,15 @@ const createSubCategory = async (parentId: number, name: string): Promise<void> 
 const getAllCategories = async () => {
   try {
     const contract = await getEthereumContract()
-    const data = await contract.getAllCategories()
+    const categories = await contract.getAllCategories()
 
-    // Destructure the returned data from the contract
-    const [ids, names, activeStates, subCategoryIdArrays] = data
-
-    // Create a structured array of categories
-    const categories = ids.map((id: any, index: number) => ({
-      id: Number(id),
-      name: names[index],
-      isActive: activeStates[index],
-      subCategoryIds: subCategoryIdArrays[index].map((subId: any) => Number(subId)),
+    // Our modular contract returns CategoryStruct[] directly
+    return categories.map((category: any) => ({
+      id: Number(category.id),
+      name: category.name,
+      isActive: category.isActive,
+      subCategoryIds: [], // Simplified - no subcategories in modular version
     }))
-
-    return categories
   } catch (error) {
     reportError(error)
     return Promise.reject(error)

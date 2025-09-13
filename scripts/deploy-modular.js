@@ -56,6 +56,13 @@ async function main() {
     const registryAddress = await registry.getAddress()
     console.log('✅ Registry deployed to:', registryAddress)
 
+    console.log()
+    console.log('🔧 Configuring registry with contract addresses...')
+    
+    // Configure the registry with all contract addresses BEFORE deploying proxy
+    await registry.configureSystem(storageAddress, coreAddress, transactionsAddress)
+    console.log('✅ Registry configured with contract addresses')
+
     // Step 5: Deploy Main Interface (Proxy)
     console.log('🚪 Step 5/5: Deploying Main Interface (Proxy)...')
     const CryptoMart = await hre.ethers.getContractFactory('CryptoMart')
@@ -65,11 +72,7 @@ async function main() {
     console.log('✅ Main Interface deployed to:', proxyAddress)
 
     console.log()
-    console.log('🔧 Configuring system...')
-
-    // Configure the registry with all contract addresses
-    await registry.configureSystem(storageAddress, coreAddress, transactionsAddress)
-    console.log('✅ Registry configured with contract addresses')
+    console.log('🔧 Configuring storage permissions...')
 
     // Setup permissions in Storage contract
     await storage.addAuthorizedContract(coreAddress)
