@@ -33,7 +33,7 @@ contract CryptoMartCore is Ownable, ReentrancyGuard, ERC721 {
   event SellerStatusUpdated(address indexed seller, CryptoMartStorage.SellerStatus status);
 
   constructor(address _storageContract) ERC721('CryptoMart', 'CMART') {
-    storageContract = CryptoMartStorage(_storageContract);
+    storageContract = CryptoMartStorage(payable(_storageContract));
   }
 
   // --- User Functions ---
@@ -241,6 +241,56 @@ contract CryptoMartCore is Ownable, ReentrancyGuard, ERC721 {
     storageContract.setProductCategory(productId, categoryId);
 
     emit ProductCreated(productId, msg.sender, name, cost);
+  }
+
+  function updateProduct(
+    uint256 productId,
+    string memory name,
+    string memory description,
+    string memory image,
+    uint256 categoryId,
+    uint256 cost,
+    uint256 stock
+  ) external {
+    require(storageContract.productExists(productId), 'Product does not exist');
+    CryptoMartStorage.ProductStruct memory product = storageContract.getProduct(productId);
+    require(product.seller == msg.sender || msg.sender == owner(), 'Not authorized');
+    require(!product.deleted, 'Product deleted');
+    require(bytes(name).length > 0, 'Name required');
+    require(cost > 0, 'Cost must be greater than zero');
+
+    CryptoMartStorage.CategoryStruct memory category = storageContract.getCategory(categoryId);
+    require(category.isActive, 'Invalid category');
+
+    CryptoMartStorage.ProductStruct memory updatedProduct = CryptoMartStorage.ProductStruct({
+      id: productId,
+      seller: product.seller,
+      name: name,
+      description: description,
+      image: image,
+      categoryId: categoryId,
+      cost: cost,
+      stock: stock,
+      timestamp: product.timestamp, // Keep original timestamp
+      deleted: false
+    });
+
+    storageContract.setProduct(productId, updatedProduct);
+    storageContract.setProductCategory(productId, categoryId);
+
+    emit ProductUpdated(productId);
+  }
+
+  function deleteProduct(uint256 productId) external {
+    require(storageContract.productExists(productId), 'Product does not exist');
+    CryptoMartStorage.ProductStruct memory product = storageContract.getProduct(productId);
+    require(product.seller == msg.sender || msg.sender == owner(), 'Not authorized');
+
+    // Mark product as deleted
+    product.deleted = true;
+    storageContract.setProduct(productId, product);
+    
+    emit ProductDeleted(productId);
   }
 
   // --- View Functions for Products ---

@@ -255,4 +255,16 @@ contract CryptoMartStorage is Ownable {
   function getPendingVerificationUsers() external view returns (address[] memory) {
     return pendingVerificationUsers;
   }
+
+  // --- Service Fee Management ---
+  function withdrawServiceFees() external onlyOwner {
+    uint256 balance = address(this).balance;
+    require(balance > 0, 'No fees to withdraw');
+    
+    (bool success, ) = payable(owner()).call{value: balance}('');
+    require(success, 'Fee withdrawal failed');
+  }
+
+  // --- Receive ETH for service fees ---
+  receive() external payable {}
 }

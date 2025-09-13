@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import './CryptoMartFactory.sol';
+import './CryptoMartRegistry.sol';
 import './CryptoMartCore.sol';
 import './CryptoMartTransactions.sol';
 import './CryptoMartStorage.sol';
@@ -9,20 +9,11 @@ import './CryptoMartStorage.sol';
 /**
  * @title CryptoMart
  * @dev Main interface contract that proxies calls to the appropriate sub-contracts
- * This provides a unified interface for the frontend while using the factory pattern internally
- * 
- * EDUCATIONAL: Proxy/Facade Pattern
- * ================================
- * This contract acts as a single entry point for all CryptoMart functionality.
- * It delegates calls to the appropriate specialized contracts, providing:
- * 1. Unified interface for frontend
- * 2. Backwards compatibility
- * 3. Clean separation of concerns
- * 4. Easy upgrades without changing frontend code
+ * This provides a unified interface for the frontend while using the registry pattern internally
  */
 contract CryptoMart {
   
-  CryptoMartFactory public immutable factory;
+  CryptoMartRegistry public immutable registry;
   
   // --- Contract References (cached for gas efficiency) ---
   CryptoMartStorage public storageContract;
@@ -40,19 +31,19 @@ contract CryptoMart {
   event BalanceWithdrawn(address indexed seller, uint256 amount);
   event ReviewCreated(uint256 indexed productId, address indexed reviewer, uint256 rating);
 
-  constructor(address payable _factory) {
-    factory = CryptoMartFactory(_factory);
+  constructor(address _registry) {
+    registry = CryptoMartRegistry(_registry);
     _updateContractReferences();
   }
 
   /**
-   * @dev Update contract references from factory
+   * @dev Update contract references from registry
    * Call this after any contract upgrades
    */
   function _updateContractReferences() internal {
-    (address storage_, address core, address transactions) = factory.getContractAddresses();
+    (address storage_, address core, address transactions) = registry.getContractAddresses();
     
-    storageContract = CryptoMartStorage(storage_);
+    storageContract = CryptoMartStorage(payable(storage_));
     coreContract = CryptoMartCore(payable(core));
     transactionsContract = CryptoMartTransactions(payable(transactions));
   }
@@ -222,15 +213,15 @@ contract CryptoMart {
   }
 
   // ===========================================
-  // ADMIN FUNCTIONS (delegated through Factory)
+  // ADMIN FUNCTIONS (delegated to Storage)
   // ===========================================
 
   function changeServicePct(uint256 newPct) external {
-    factory.changeServiceFee(newPct);
+    storageContract.setServicePct(newPct);
   }
 
   function withdrawServiceFees() external {
-    factory.withdrawServiceFees();
+    storageContract.withdrawServiceFees();
   }
 
   // ===========================================
@@ -260,7 +251,7 @@ contract CryptoMart {
   }
 
   function owner() external view returns (address) {
-    return factory.owner();
+    return registry.owner();
   }
 
   // Stub functions for subcategory compatibility (simplified)
@@ -301,23 +292,21 @@ contract CryptoMart {
 
   // Additional compatibility functions that might be needed
   function updateProduct(
-    uint256 /*productId*/,
-    string memory /*name*/,
-    string memory /*description*/,
-    string memory /*image*/,
-    uint256 /*categoryId*/,
-    uint256 /*cost*/,
-    uint256 /*stock*/
-  ) external pure {
-    // This would need to be implemented in Core contract
-    // For now, this is a placeholder
-    revert("Update product not implemented in modular version");
+    uint256 productId,
+    string memory name,
+    string memory description,
+    string memory image,
+    uint256 categoryId,
+    uint256 cost,
+    uint256 stock
+  ) external {
+    coreContract.updateProduct(productId, name, description, image, categoryId, cost, stock);
+    emit ProductUpdated(productId);
   }
 
-  function deleteProduct(uint256 /*productId*/) external pure {
-    // This would need to be implemented in Core contract
-    // For now, this is a placeholder  
-    revert("Delete product not implemented in modular version");
+  function deleteProduct(uint256 productId) external {
+    coreContract.deleteProduct(productId);
+    emit ProductDeleted(productId);
   }
 
   function getProductsByCategory(uint256 categoryId) external view returns (CryptoMartStorage.ProductStruct[] memory) {
@@ -347,20 +336,20 @@ contract CryptoMart {
   }
 
   // ===========================================
-  // FACTORY FUNCTIONS
+  // REGISTRY FUNCTIONS
   // ===========================================
 
-  function getFactoryInfo() external view returns (
-    address factoryAddress,
-    bool isDeployed,
+  function getRegistryInfo() external view returns (
+    address registryAddress,
+    bool isConfigured,
     uint256 deploymentTime,
     string memory version
   ) {
     return (
-      address(factory),
-      factory.isDeployed(),
-      factory.deploymentTimestamp(),
-      "Factory v1.0.0"
+      address(registry),
+      registry.isConfigured(),
+      registry.deploymentTimestamp(),
+      "Registry v1.0.0"
     );
   }
 
@@ -370,6 +359,11 @@ contract CryptoMart {
     uint256 totalCategories,
     uint256 serviceFee
   ) {
-    return factory.getSystemStats();
+    return (
+      coreContract.getTotalProducts(),
+      coreContract.getTotalSales(),
+      0, // totalCategories - would need to be implemented
+      storageContract.servicePct()
+    );
   }
 }

@@ -1,0 +1,77 @@
+```
+🏭 CRYPTOMART FACTORY PATTERN ARCHITECTURE
+═══════════════════════════════════════════════════════════════
+
+                    👤 USER (Frontend)
+                           │
+                           │ calls functions
+                           ▼
+                ┌─────────────────────────┐
+                │   🚪 CryptoMartProxy    │ ← Main Interface
+                │   (Main Entrance)       │   (Frontend talks here ONLY)
+                └─────────────────────────┘
+                           │
+                           │ routes calls to
+                           ▼
+            ┌──────────────┼──────────────┐
+            │              │              │
+            ▼              ▼              ▼
+    ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+    │ 🏪 Core     │ │ 💳 Trans-   │ │ 📦 Storage  │
+    │ (Customer   │ │ actions     │ │ (Warehouse) │
+    │  Service)   │ │ (Payment)   │ │             │
+    └─────────────┘ └─────────────┘ └─────────────┘
+            │              │              ▲
+            │              │              │
+            └──────────────┼──────────────┘
+                           │ all save/read data from
+                           ▼
+                    📊 BLOCKCHAIN STATE
+                    (All data stored here)
+
+═══════════════════════════════════════════════════════════════
+
+🔧 DEPLOYMENT FLOW:
+─────────────────
+
+Step 1: 🏗️ CryptoMartFactory deploys everything
+Step 2: 📦 Storage contract created (holds all data)
+Step 3: 🏪 Core contract created (connects to Storage)
+Step 4: 💳 Transactions contract created (connects to Storage)  
+Step 5: 🚪 Proxy contract created (connects to all)
+Step 6: ✅ Frontend uses Proxy address only
+
+═══════════════════════════════════════════════════════════════
+
+💡 SIMPLE EXPLANATION:
+────────────────────
+
+Think of Amazon.com:
+• Proxy = Amazon.com website (what customers see)
+• Core = Customer service (handle accounts, products) 
+• Transactions = Payment system (handle money)
+• Storage = Amazon warehouses (store everything)
+• Factory = Construction company (builds the whole system)
+
+When you buy on Amazon:
+1. You use Amazon.com (Proxy)
+2. It processes your order (Core)  
+3. It charges your card (Transactions)
+4. It stores your order (Storage)
+5. All connected seamlessly!
+
+═══════════════════════════════════════════════════════════════
+
+🎯 FOR FRONTEND DEVELOPERS:
+─────────────────────────
+
+You only need:
+• Proxy contract address
+• Proxy contract ABI
+• That's it! Everything else is automatic.
+
+const contract = new ethers.Contract(PROXY_ADDRESS, PROXY_ABI, signer);
+await contract.buyProduct(id, {value: price}); // Just works!
+
+═══════════════════════════════════════════════════════════════
+```

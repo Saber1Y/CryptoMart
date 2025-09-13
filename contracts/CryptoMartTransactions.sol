@@ -29,7 +29,7 @@ contract CryptoMartTransactions is Ownable, ReentrancyGuard {
   }
 
   constructor(address _storageContract, address _coreContract) {
-    storageContract = CryptoMartStorage(_storageContract);
+    storageContract = CryptoMartStorage(payable(_storageContract));
     coreContract = _coreContract;
   }
 
@@ -72,9 +72,9 @@ contract CryptoMartTransactions is Ownable, ReentrancyGuard {
     emit ProductPurchased(productId, msg.sender, product.seller);
     emit PurchaseRecorded(productId, msg.sender, product.seller, msg.value, block.timestamp);
 
-    // Transfer fees to core contract for admin withdrawal
+    // Transfer fees to storage contract for admin withdrawal
     if (fee > 0) {
-      (bool success, ) = payable(coreContract).call{value: fee}('');
+      (bool success, ) = payable(address(storageContract)).call{value: fee}('');
       require(success, 'Fee transfer failed');
     }
   }
