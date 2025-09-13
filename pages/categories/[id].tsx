@@ -4,6 +4,7 @@ import { getProductsByCategory, getCategory } from '@/services/blockchain'
 import { ProductStruct, CategoryStruct } from '@/utils/type.dt'
 import { FiPackage } from 'react-icons/fi'
 import Link from 'next/link'
+import Image from 'next/image'
 
 const CategoryPage = () => {
   const router = useRouter()
@@ -59,10 +60,12 @@ const CategoryPage = () => {
                 hover:border-indigo-500/50 transition-all"
             >
               <div className="aspect-square relative">
-                {product.images[0] ? (
-                  <img
+                {product.images && product.images.length > 0 ? (
+                  <Image
                     src={product.images[0]}
                     alt={product.name}
+                    width={500}
+                    height={500}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 ) : (

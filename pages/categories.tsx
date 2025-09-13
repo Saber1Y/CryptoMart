@@ -93,7 +93,7 @@ const CategoriesBento = () => {
           </h1>
           <p className="mt-4 text-lg text-gray-400 leading-relaxed">
             Discover our wide range of products organized by categories. Browse through different 
-            sections and find exactly what you're looking for.
+            sections and find exactly what you&#39;re looking for.
           </p>
         </div>
       
@@ -102,7 +102,7 @@ const CategoriesBento = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="col-span-full lg:col-span-2 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 
+            className="col-span-full lg:col-span-2 bg-transparent 
               rounded-3xl p-8 backdrop-blur-xl border border-white/10"
           >
             <div className="flex items-center gap-4 mb-8">
@@ -120,11 +120,7 @@ const CategoriesBento = () => {
                 <motion.button
                   key={category.id}
                   onClick={() => setSelectedCategory(category)}
-                  className={`p-5 rounded-xl border transition-all ${
-                    selectedCategory?.id === category.id
-                      ? 'bg-indigo-500/30 border-indigo-500'
-                      : 'bg-gray-800/50 border-gray-700/50 hover:border-indigo-500/50'
-                  }`}
+                  className={`p-5 rounded-xl border transition-all`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -142,7 +138,7 @@ const CategoriesBento = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="col-span-full lg:col-span-1 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 
+            className="col-span-full lg:col-span-1
               rounded-3xl p-8 backdrop-blur-xl border border-white/10"
           >
             <div className="flex items-center gap-4 mb-8">

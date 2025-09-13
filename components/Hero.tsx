@@ -16,7 +16,7 @@ const Hero = () => {
       {/* Improved background with multiple layers */}
       <div className="absolute inset-0">
         {/* Gradient mesh background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/50 via-purple-950/30 to-slate-950/40" />
+        <div className="absolute inset-0 bg-gradient-to-br" />
         
         {/* Animated gradient spots */}
         <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-purple-600/20 rounded-full filter blur-[120px] animate-pulse" />
