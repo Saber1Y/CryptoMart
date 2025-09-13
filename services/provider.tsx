@@ -4,12 +4,12 @@ import * as React from 'react'
 import { WagmiConfig, configureChains, createConfig } from 'wagmi'
 import { RainbowKitProvider, connectorsForWallets, darkTheme } from '@rainbow-me/rainbowkit'
 import { metaMaskWallet, coinbaseWallet, rainbowWallet } from '@rainbow-me/rainbowkit/wallets'
-import { sepolia, hardhat, localhost } from 'wagmi/chains'
+import { sepolia, hardhat, localhost, baseSepolia } from 'wagmi/chains'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
 import { publicProvider } from 'wagmi/providers/public'
 
 const { chains, publicClient } = configureChains(
-  [hardhat, localhost, sepolia], // Hardhat first since that's where your contract is deployed
+  [baseSepolia, hardhat, localhost, sepolia], // Base Sepolia first for deployment
   [alchemyProvider({ apiKey: process.env.NEXT_PUBLIC_ALCHEMY_ID as string }), publicProvider()]
 )
 

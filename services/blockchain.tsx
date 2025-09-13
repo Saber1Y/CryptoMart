@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import address from '@/contracts/contractAddress.json'
-import abi from '@/artifacts/contracts/HemShop.sol/HemShop.json'
+import abi from '@/artifacts/contracts/CryptoMart.sol/CryptoMart.json'
 import {
   ProductParams,
   ProductStruct,
@@ -43,11 +43,11 @@ export const getEthereumContract = async () => {
   if (accounts.length > 0) {
     const provider = new ethers.BrowserProvider(ethereum)
     const signer = await provider.getSigner()
-    const contract = new ethers.Contract(address.HemShop, abi.abi, signer)
+    const contract = new ethers.Contract(address.CryptoMart, abi.abi, signer)
     return contract
   } else {
     const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL)
-    const contract = new ethers.Contract(address.HemShop, abi.abi, provider)
+    const contract = new ethers.Contract(address.CryptoMart, abi.abi, provider)
     return contract
   }
 }
