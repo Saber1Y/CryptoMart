@@ -23,7 +23,7 @@ const HomePage: NextPage = () => {
             <h2 className="text-3xl font-bold text-white mb-4">Discover Our Latest Products</h2>
             <p className="text-gray-400 max-w-2xl mx-auto">
               Explore our curated collection of unique items, all available for purchase with
-              cryptocurrency. From digital assets to physical goods, find exactly what you're
+              cryptocurrency. From digital assets to physical goods, find exactly what you&#39;re
               looking for.
             </p>
           </div>
@@ -45,7 +45,7 @@ const HomePage: NextPage = () => {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-white mb-4">Live Transactions</h2>
             <p className="text-gray-400 max-w-2xl mx-auto">
-              Watch real-time purchases happening on our platform. See what's trending and popular
+              Watch real-time purchases happening on our platform. See what&#39;s trending and popular
               among our community of crypto shoppers.
             </p>
           </div>

@@ -5,13 +5,14 @@ import './CryptoMartRegistry.sol';
 import './CryptoMartCore.sol';
 import './CryptoMartTransactions.sol';
 import './CryptoMartStorage.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
 
 /**
  * @title CryptoMart
  * @dev Main interface contract that proxies calls to the appropriate sub-contracts
  * This provides a unified interface for the frontend while using the registry pattern internally
  */
-contract CryptoMart {
+contract CryptoMart is Ownable {
   
   CryptoMartRegistry public immutable registry;
   
@@ -33,6 +34,7 @@ contract CryptoMart {
 
   constructor(address _registry) {
     registry = CryptoMartRegistry(_registry);
+    _transferOwnership(msg.sender);
     _updateContractReferences();
   }
 
@@ -60,7 +62,7 @@ contract CryptoMart {
   // ===========================================
 
   function registerUser(string memory name, string memory email, string memory avatar) external {
-    coreContract.registerUser(name, email, avatar);
+    coreContract.registerUser(msg.sender, name, email, avatar);
     emit UserRegistered(msg.sender, name);
   }
 
@@ -79,7 +81,7 @@ contract CryptoMart {
     string memory phone,
     string memory logo
   ) external {
-    coreContract.registerSeller(businessName, description, email, phone, logo);
+    coreContract.registerSeller(msg.sender, businessName, description, email, phone, logo);
     emit SellerRegistered(msg.sender, businessName);
   }
 
@@ -114,9 +116,9 @@ contract CryptoMart {
   // CATEGORY FUNCTIONS (delegated to Core contract)
   // ===========================================
 
-  function createCategory(string memory name) external {
+  function createCategory(string memory name) external onlyOwner {
     coreContract.createCategory(name);
-    // Note: Event is emitted by Core contract
+    emit CategoryCreated(storageContract.categoryCounter(), name);
   }
 
   function getAllCategories() external view returns (CryptoMartStorage.CategoryStruct[] memory) {
@@ -147,8 +149,13 @@ contract CryptoMart {
     uint256 cost,
     uint256 stock
   ) external {
-    coreContract.createProduct(name, description, image, categoryId, cost, stock);
-    // Note: Event is emitted by Core contract
+    // Validate seller permissions at proxy level
+    require(storageContract.registeredSellers(msg.sender), 'Must be registered seller');
+    (, CryptoMartStorage.SellerStatus status) = storageContract.getSeller(msg.sender);
+    require(status == CryptoMartStorage.SellerStatus.Verified, 'Must be verified seller');
+    
+    coreContract.createProduct(msg.sender, name, description, image, categoryId, cost, stock);
+    emit ProductCreated(storageContract.totalProducts(), msg.sender, name, cost);
   }
 
   function getProduct(uint256 productId) external view returns (CryptoMartStorage.ProductStruct memory) {
@@ -250,16 +257,12 @@ contract CryptoMart {
     return coreContract.getTotalSales();
   }
 
-  function owner() external view returns (address) {
-    return registry.owner();
-  }
-
   // Stub functions for subcategory compatibility (simplified)
-  function createSubCategory(uint256 /*parentId*/, string memory name) external {
+  function createSubCategory(uint256 /*parentId*/, string memory name) external onlyOwner {
     coreContract.createCategory(name);
   }
 
-  function createSubCategoriesBulk(uint256 /*parentId*/, string[] memory names) external {
+  function createSubCategoriesBulk(uint256 /*parentId*/, string[] memory names) external onlyOwner {
     for (uint256 i = 0; i < names.length; i++) {
       coreContract.createCategory(names[i]);
     }
@@ -282,11 +285,11 @@ contract CryptoMart {
     coreContract.deleteCategory(id);
   }
 
-  function updateSellerStatus(address seller, CryptoMartStorage.SellerStatus status) external {
+  function updateSellerStatus(address seller, CryptoMartStorage.SellerStatus status) external onlyOwner {
     coreContract.updateSellerStatus(seller, status);
   }
 
-  function grantOwnerSellerAccess() external {
+  function grantOwnerSellerAccess() external onlyOwner {
     coreContract.grantOwnerSellerAccess();
   }
 
