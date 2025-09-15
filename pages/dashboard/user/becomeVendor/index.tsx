@@ -3,21 +3,26 @@ import { useRouter } from 'next/router'
 import { toast } from 'react-toastify'
 import { requestToBecomeVendor, getSeller } from '@/services/blockchain'
 import { SellerRegistrationParams, SellerStatus } from '@/utils/type.dt'
-import { useAccount } from 'wagmi'
-import { 
-  Store, 
-  Mail, 
-  Phone, 
-  FileText, 
+import { useAccount, useConnect, useDisconnect } from 'wagmi'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
+import AnvilAccountInfo from '@/components/AnvilAccountInfo'
+import {
+  Store,
+  Mail,
+  Phone,
+  FileText,
   Image as ImageIcon,
   Loader2,
-  AlertCircle 
+  AlertCircle,
+  Wallet,
+  CheckCircle,
+  XCircle,
 } from 'lucide-react'
 import withUserLayout from '@/components/hoc/withUserLayout'
 
 const BecomeVendor = () => {
   const router = useRouter()
-  const { address } = useAccount()
+  const { address, isConnected } = useAccount()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [loading, setLoading] = useState(true)
   const [sellerStatus, setSellerStatus] = useState<SellerStatus | null>(null)
@@ -26,54 +31,119 @@ const BecomeVendor = () => {
     description: '',
     email: '',
     phone: '',
-    logo: ''
+    logo: '',
   })
 
   useEffect(() => {
     const checkSellerStatus = async () => {
-      if (!address) return
+      console.log('useEffect triggered - address:', address, 'isConnected:', isConnected)
+
+      if (!address) {
+        console.log('No address, setting loading to false')
+        setLoading(false)
+        return
+      }
+
       try {
+        console.log('Checking seller status for address:', address)
         const seller = await getSeller(address)
-        if (seller) {
-          setSellerStatus(seller.status)
+        console.log('Seller data:', seller)
+
+        // Handle the case where seller exists and has a status
+        if (seller && seller.status !== undefined) {
+          // Convert BigInt to number if needed
+          const status = typeof seller.status === 'bigint' ? Number(seller.status) : seller.status
+          setSellerStatus(status as SellerStatus)
+          console.log('Set seller status:', status)
+        } else {
+          // If no seller data or status is 0/undefined, user is unverified (can register)
+          console.log('No seller data, setting status to Unverified')
+          setSellerStatus(SellerStatus.Unverified)
         }
       } catch (error) {
         console.error('Error checking seller status:', error)
+        // On error, assume user is unverified and can register
+        setSellerStatus(SellerStatus.Unverified)
       } finally {
+        console.log('Setting loading to false')
         setLoading(false)
       }
     }
 
     checkSellerStatus()
-  }, [address])
+  }, [address, isConnected])
 
   // Show loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4" />
+          <p className="text-gray-400">Loading your vendor status...</p>
+        </div>
       </div>
     )
   }
 
-  // Show message if already registered or pending
-  if (sellerStatus !== null) {
+  // Show wallet connection if not connected
+  if (!isConnected || !address) {
     return (
       <div className="min-h-screen bg-gray-900 py-12">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-500/10 mb-6">
-              <AlertCircle className="w-8 h-8 text-yellow-400" />
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-500/10 mb-6">
+              <Wallet className="w-8 h-8 text-blue-400" />
+            </div>
+            <h1 className="text-3xl font-bold text-white mb-4">Connect Your Wallet</h1>
+            <p className="text-gray-400 text-lg mb-8">
+              You need to connect your wallet to become a vendor
+            </p>
+            <ConnectButton />
+
+            {/* Anvil Account Info for local development */}
+            <div className="mt-8">
+              <AnvilAccountInfo />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show message if already registered or pending (but not for Unverified status)
+  if (sellerStatus !== null && sellerStatus !== SellerStatus.Unverified) {
+    return (
+      <div className="min-h-screen bg-gray-900 py-12">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6">
+              {sellerStatus === SellerStatus.Pending ? (
+                <div className="bg-yellow-500/10">
+                  <AlertCircle className="w-8 h-8 text-yellow-400" />
+                </div>
+              ) : sellerStatus === SellerStatus.Verified ? (
+                <div className="bg-green-500/10">
+                  <CheckCircle className="w-8 h-8 text-green-400" />
+                </div>
+              ) : (
+                <div className="bg-red-500/10">
+                  <XCircle className="w-8 h-8 text-red-400" />
+                </div>
+              )}
             </div>
             <h1 className="text-3xl font-bold text-white mb-4">
               {sellerStatus === SellerStatus.Pending
                 ? 'Verification Pending'
-                : 'Already Registered'}
+                : sellerStatus === SellerStatus.Verified
+                ? 'Already Verified'
+                : 'Registration Status'}
             </h1>
             <p className="text-gray-400 text-lg mb-8">
               {sellerStatus === SellerStatus.Pending
                 ? 'Your vendor application is currently under review. Please wait for admin approval.'
-                : 'You are already registered as a vendor.'}
+                : sellerStatus === SellerStatus.Verified
+                ? 'You are already registered and verified as a vendor.'
+                : 'Your vendor status needs attention.'}
             </p>
             <button
               onClick={() => router.push('/dashboard/user')}
@@ -90,15 +160,15 @@ const BecomeVendor = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!address) {
       toast.error('Please connect your wallet first')
       return
@@ -106,7 +176,7 @@ const BecomeVendor = () => {
 
     try {
       setIsSubmitting(true)
-      await requestToBecomeVendor(formData)
+      await requestToBecomeVendor(formData, address)
       toast.success('Vendor registration submitted successfully!')
       router.push('/dashboard/user')
     } catch (error: any) {
@@ -122,14 +192,14 @@ const BecomeVendor = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white">Become a Vendor</h1>
-          <p className="mt-2 text-gray-400">
-            Start selling your products on our marketplace
-          </p>
+          <p className="mt-2 text-gray-400">Start selling your products on our marketplace</p>
         </div>
 
         {/* Registration Form */}
-        <div className="bg-gray-800/50 backdrop-blur-xl rounded-2xl p-6 shadow-xl 
-          border border-gray-700/50">
+        <div
+          className="bg-gray-800/50 backdrop-blur-xl rounded-2xl p-6 shadow-xl 
+          border border-gray-700/50"
+        >
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Business Name */}
             <div>

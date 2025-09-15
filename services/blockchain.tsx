@@ -52,6 +52,21 @@ export const getEthereumContract = async () => {
   }
 }
 
+// Get contract with signer for writing operations
+export const getEthereumContractWithSigner = async () => {
+  if (!ethereum) {
+    throw new Error('Please install a wallet provider')
+  }
+  
+  // Request account access if needed
+  await ethereum.request({ method: 'eth_requestAccounts' })
+  
+  const provider = new ethers.BrowserProvider(ethereum)
+  const signer = await provider.getSigner()
+  const contract = new ethers.Contract(address.CryptoMart, abi.abi, signer)
+  return contract
+}
+
 // Product Management Functions
 const createProduct = async (params: ProductParams): Promise<void> => {
   if (!ethereum) throw new Error('No wallet provider found')
@@ -464,14 +479,58 @@ const getSellerStatus = async (seller: string): Promise<SellerStatus> => {
   }
 }
 
-const requestToBecomeVendor = async (params: SellerRegistrationParams): Promise<void> => {
+const requestToBecomeVendor = async (
+  params: SellerRegistrationParams, 
+  userAddress?: string
+): Promise<void> => {
   if (!ethereum) {
     reportError('Please install a wallet provider')
     return Promise.reject(new Error('Browser provider not found'))
   }
+  
   try {
-    const contract = await getEthereumContract()
-    tx = await contract.registerSeller(
+    // Use the contract with signer for write operations
+    const contract = await getEthereumContractWithSigner()
+
+    // Get user address - either from parameter or from ethereum
+    let address: string
+    if (userAddress) {
+      address = userAddress
+    } else {
+      const accounts = await ethereum.request({ method: 'eth_accounts' })
+      if (accounts.length === 0) {
+        throw new Error('Please connect your wallet first')
+      }
+      address = accounts[0]
+    }
+
+    try {
+      const userData = await contract.getUser(address)
+      if (!userData[0] || userData[0] === '') {
+        // Empty name means not registered
+        console.log('User not registered, registering first...')
+        const userTx = await contract.registerUser(
+          params.businessName, // Use business name as user name
+          params.email,
+          params.logo || '' // Use logo as avatar
+        )
+        await userTx.wait()
+        console.log('User registration completed')
+      }
+    } catch (error) {
+      // If getUser fails, user is not registered, so register them
+      console.log('User not found, registering first...')
+      const userTx = await contract.registerUser(
+        params.businessName,
+        params.email,
+        params.logo || ''
+      )
+      await userTx.wait()
+      console.log('User registration completed')
+    }
+
+    // Now register as seller
+    const tx = await contract.registerSeller(
       params.businessName,
       params.description,
       params.email,
@@ -810,6 +869,19 @@ const getServiceFee = async (): Promise<number> => {
   }
 }
 
+const getWalletBalance = async (address: string): Promise<number> => {
+  try {
+    if (!ethereum) throw new Error('No wallet provider found')
+
+    const provider = new ethers.BrowserProvider(ethereum)
+    const balance = await provider.getBalance(address)
+    return Number(fromWei(balance))
+  } catch (error) {
+    reportError(error)
+    return Promise.reject(error)
+  }
+}
+
 export {
   createProduct,
   updateProduct,
@@ -855,4 +927,5 @@ export {
   getAllOrders,
   type CategoryStruct,
   getServiceFee,
+  getWalletBalance,
 }

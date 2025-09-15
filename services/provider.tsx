@@ -8,8 +8,24 @@ import { sepolia, hardhat, localhost, baseSepolia } from 'wagmi/chains'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
 import { publicProvider } from 'wagmi/providers/public'
 
+// Configure Anvil network (same as localhost but with specific config)
+const anvilNetwork = {
+  ...localhost,
+  id: 31337,
+  name: 'Anvil Local',
+  network: 'anvil',
+  rpcUrls: {
+    default: {
+      http: ['http://127.0.0.1:8545'],
+    },
+    public: {
+      http: ['http://127.0.0.1:8545'],
+    },
+  },
+}
+
 const { chains, publicClient } = configureChains(
-  [baseSepolia, hardhat, localhost, sepolia], // Base Sepolia first for deployment
+  [anvilNetwork, baseSepolia, hardhat, localhost, sepolia], // Anvil first for local development
   [alchemyProvider({ apiKey: process.env.NEXT_PUBLIC_ALCHEMY_ID as string }), publicProvider()]
 )
 
