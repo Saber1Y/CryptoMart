@@ -2,7 +2,6 @@ import { ethers } from 'ethers'
 import address from '@/contracts/contractAddress.json'
 import abi from '@/artifacts/contracts/CryptoMartProxy.sol/CryptoMart.json'
 import {
-  ProductParams,
   ProductStruct,
   PurchaseHistoryStruct,
   ReviewStruct,
@@ -13,8 +12,10 @@ import {
   SellerRegistrationParams,
   CategoryStruct,
   SellerData,
+  ProductParams,
 } from '@/utils/type.dt'
 
+// Utility functions
 // Utility functions
 export const toWei = (num: number): bigint => {
   try {
@@ -52,14 +53,24 @@ export const getEthereumContract = async () => {
   }
 }
 
+// Get read-only contract (no MetaMask interaction)
+export const getReadOnlyContract = () => {
+  const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL)
+  const contract = new ethers.Contract(address.CryptoMart, abi.abi, provider)
+  return contract
+}
+
 // Get contract with signer for writing operations
 export const getEthereumContractWithSigner = async () => {
   if (!ethereum) {
     throw new Error('Please install a wallet provider')
   }
   
-  // Request account access if needed
-  await ethereum.request({ method: 'eth_requestAccounts' })
+  // Check if accounts are already available (don't force request)
+  const accounts = await ethereum.request({ method: 'eth_accounts' })
+  if (accounts.length === 0) {
+    throw new Error('Please connect your wallet first')
+  }
   
   const provider = new ethers.BrowserProvider(ethereum)
   const signer = await provider.getSigner()
@@ -168,13 +179,13 @@ const getProducts = async (): Promise<ProductStruct[]> => {
 }
 
 const getProductsByCategory = async (category: string): Promise<ProductStruct[]> => {
-  const contract = await getEthereumContract()
+  const contract = getReadOnlyContract()
   const products = await contract.getProductsByCategory(category)
   return structureProduct(products)
 }
 
 const getSellerProducts = async (seller: string): Promise<ProductStruct[]> => {
-  const contract = await getEthereumContract()
+  const contract = getReadOnlyContract()
   const products = await contract.getSellerProducts(seller)
   return structureProduct(products)
 }
@@ -480,14 +491,14 @@ const getSellerStatus = async (seller: string): Promise<SellerStatus> => {
 }
 
 const requestToBecomeVendor = async (
-  params: SellerRegistrationParams, 
+  params: SellerRegistrationParams,
   userAddress?: string
 ): Promise<void> => {
   if (!ethereum) {
     reportError('Please install a wallet provider')
     return Promise.reject(new Error('Browser provider not found'))
   }
-  
+
   try {
     // Use the contract with signer for write operations
     const contract = await getEthereumContractWithSigner()
@@ -674,7 +685,7 @@ const getAllSellers = async (): Promise<SellerData[]> => {
 }
 
 const getSeller = async (address: string): Promise<SellerData> => {
-  const contract = await getEthereumContract()
+  const contract = getReadOnlyContract()
   const sellerData = await contract.getSeller(address)
 
   return {

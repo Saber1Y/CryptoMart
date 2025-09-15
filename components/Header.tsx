@@ -10,7 +10,7 @@ import { BiStore } from 'react-icons/bi'
 import { Menu, Transition } from '@headlessui/react'
 import { FiChevronDown, FiUser, FiPackage, FiSettings } from 'react-icons/fi'
 import { useCart } from '@/contexts/CartContext'
-import { fromWei, getEthereumContract } from '@/services/blockchain'
+import { fromWei, getEthereumContract, getReadOnlyContract } from '@/services/blockchain'
 
 const Header: React.FC = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false)
@@ -31,7 +31,7 @@ const Header: React.FC = () => {
     const checkDeployer = async () => {
       if (address) {
         try {
-          const contract = await getEthereumContract()
+          const contract = getReadOnlyContract()
           const owner = await contract.owner()
           setIsDeployer(owner.toLowerCase() === address.toLowerCase())
         } catch (error) {

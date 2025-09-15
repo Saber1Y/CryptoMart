@@ -6,8 +6,8 @@ import {
   getBuyerPurchaseHistory,
   getWalletBalance,
 } from '@/services/blockchain'
-import { ProductStruct, PurchaseHistoryStruct } from '@/utils/type.dt'
-import { ethers } from 'ethers'
+// import { ProductStruct, PurchaseHistoryStruct } from '@/utils/type.dt'
+// import { ethers } from 'ethers'
 
 const UserDashboard = () => {
   const [stats, setStats] = useState({

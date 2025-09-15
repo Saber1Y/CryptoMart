@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import { toast } from 'react-toastify'
 import { requestToBecomeVendor, getSeller } from '@/services/blockchain'
 import { SellerRegistrationParams, SellerStatus } from '@/utils/type.dt'
-import { useAccount, useConnect, useDisconnect } from 'wagmi'
+import { useAccount } from 'wagmi'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import AnvilAccountInfo from '@/components/AnvilAccountInfo'
 import {
@@ -73,7 +73,6 @@ const BecomeVendor = () => {
     checkSellerStatus()
   }, [address, isConnected])
 
-  // Show loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -181,6 +180,7 @@ const BecomeVendor = () => {
       router.push('/dashboard/user')
     } catch (error: any) {
       toast.error(error.message || 'Failed to register as vendor')
+      console.error('Registration error:', error)
     } finally {
       setIsSubmitting(false)
     }
