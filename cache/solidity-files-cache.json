@@ -628,8 +628,8 @@
       ]
     },
     "/Users/USER/codes/Ecommer-dApp/contracts/CryptoMartProxy.sol": {
-      "lastModificationDate": 1757875922863,
-      "contentHash": "0f75edad53c0c23ee31562a20b7a4057",
+      "lastModificationDate": 1757945966816,
+      "contentHash": "884f69a733791450c0dbedb6b0f6fc6f",
       "sourceName": "contracts/CryptoMartProxy.sol",
       "solcConfig": {
         "version": "0.8.24",

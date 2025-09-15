@@ -35,7 +35,8 @@ contract CryptoMart is Ownable {
   constructor(address _registry) {
     registry = CryptoMartRegistry(_registry);
     _transferOwnership(msg.sender);
-    _updateContractReferences();
+    // Don't call _updateContractReferences() here as system may not be configured yet
+    // Call refreshContractReferences() after system configuration
   }
 
   /**
@@ -43,6 +44,11 @@ contract CryptoMart is Ownable {
    * Call this after any contract upgrades
    */
   function _updateContractReferences() internal {
+    // Check if registry is configured before trying to get addresses
+    if (!registry.isConfigured()) {
+      return; // Skip if not configured yet
+    }
+    
     (address storage_, address core, address transactions) = registry.getContractAddresses();
     
     storageContract = CryptoMartStorage(payable(storage_));
