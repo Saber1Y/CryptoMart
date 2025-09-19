@@ -47,7 +47,7 @@ const Header: React.FC = () => {
     { href: '/', label: 'Home' },
     { href: '/categories', label: 'Categories' },
     { href: '/store', label: 'Store' },
-
+    { href: '/dashboard/user/becomeVendor', label: 'Become a Vendor' },
     { href: '/vendor', label: 'Vendors' },
   ]
 

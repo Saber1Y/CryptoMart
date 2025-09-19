@@ -1,15 +1,15 @@
-import { useState } from 'react';
-import { FiSearch } from 'react-icons/fi';
-import { motion } from 'framer-motion';
+import { useState } from 'react'
+import { FiSearch } from 'react-icons/fi'
+import { motion } from 'framer-motion'
 
 const Hero = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState('')
 
   const stats = [
     { label: 'Global Vendors', value: '2K+', icon: '🌍' },
     { label: 'Products Listed', value: '100K+', icon: '📦' },
     { label: 'Happy Customers', value: '50K+', icon: '🎉' },
-  ];
+  ]
 
   return (
     <div className="relative bg-[#0A0118] min-h-screen w-full pt-8 md:pt-6 overflow-hidden">
@@ -17,11 +17,11 @@ const Hero = () => {
       <div className="absolute inset-0">
         {/* Gradient mesh background */}
         <div className="absolute inset-0 bg-gradient-to-br" />
-        
+
         {/* Animated gradient spots */}
         <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-purple-600/20 rounded-full filter blur-[120px] animate-pulse" />
         <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-indigo-600/20 rounded-full filter blur-[120px] animate-pulse" />
-        
+
         {/* Subtle noise texture */}
         <div className="absolute inset-0 opacity-[0.15] mix-blend-overlay bg-[url('/noise.png')]" />
       </div>
@@ -29,7 +29,7 @@ const Hero = () => {
       <div className="relative w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 lg:pt-32 mx-auto">
         <div className="flex flex-col lg:flex-row items-center gap-6 sm:gap-8 lg:gap-16 max-w-full">
           {/* Left content */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex-1 text-center lg:text-left w-full"
@@ -43,7 +43,7 @@ const Hero = () => {
               <span className="text-purple-400 text-sm font-medium">Web3 Marketplace</span>
               <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
             </motion.div>
-            
+
             {/* Adjusted heading sizes */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4 md:mb-6 leading-[1.2] tracking-tight">
               <span className="block">Discover the New</span>
@@ -84,7 +84,7 @@ const Hero = () => {
           </motion.div>
 
           {/* Right content - Stats */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex-1 w-full lg:w-auto"
@@ -96,9 +96,11 @@ const Hero = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.2 }}
-                  className="group p-4 rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/10 hover:bg-white/[0.05] transition-all duration-300"
+                  className="group p-4 rounded-2xl bg-white/[0.03] backdrop-blur-sm border border-white/10 hover:bg-white/[0.05] transition-all duration-300 cursor-pointer"
                 >
-                  <span className="text-3xl mb-2 block group-hover:scale-110 transition-transform">{stat.icon}</span>
+                  <span className="text-3xl mb-2 block group-hover:scale-110 transition-transform">
+                    {stat.icon}
+                  </span>
                   <div className="text-2xl font-bold text-white mb-0.5">{stat.value}</div>
                   <div className="text-gray-400 text-sm">{stat.label}</div>
                 </motion.div>
@@ -108,7 +110,7 @@ const Hero = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Hero;
+export default Hero

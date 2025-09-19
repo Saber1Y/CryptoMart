@@ -1,13 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { toast } from 'react-toastify'
-import {
-  requestToBecomeVendor,
-  requestToBecomeVendorWithWagmi,
-  getSeller,
-} from '@/services/blockchain'
+import { requestToBecomeVendor, getSeller } from '@/services/blockchain'
 import { SellerRegistrationParams, SellerStatus } from '@/utils/type.dt'
-import { useAccount, useWalletClient } from 'wagmi'
+import { useAccount } from 'wagmi'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import AnvilAccountInfo from '@/components/AnvilAccountInfo'
 import {
@@ -27,7 +23,6 @@ import withUserLayout from '@/components/hoc/withUserLayout'
 const BecomeVendor = () => {
   const router = useRouter()
   const { address, isConnected } = useAccount()
-  const { data: walletClient } = useWalletClient()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [loading, setLoading] = useState(true)
   const [sellerStatus, setSellerStatus] = useState<SellerStatus | null>(null)
@@ -178,15 +173,9 @@ const BecomeVendor = () => {
       return
     }
 
-    if (!walletClient) {
-      toast.error('Wallet client not available')
-      return
-    }
-
     try {
       setIsSubmitting(true)
-      // Use wagmi-compatible function to avoid MetaMask blacklist
-      await requestToBecomeVendorWithWagmi(formData, walletClient, address)
+      await requestToBecomeVendor(formData, address)
       toast.success('Vendor registration submitted successfully!')
       router.push('/dashboard/user')
     } catch (error: any) {

@@ -15,7 +15,7 @@ import {
   ProductParams,
 } from '@/utils/type.dt'
 
-// Utility functions
+
 // Utility functions
 export const toWei = (num: number): bigint => {
   try {
@@ -65,7 +65,7 @@ export const getEthereumContractWithSigner = async (skipAccountsCheck = false) =
   if (!ethereum) {
     throw new Error('Please install a wallet provider')
   }
-
+  
   if (!skipAccountsCheck) {
     // Check if accounts are already available (don't force request)
     const accounts = await ethereum.request({ method: 'eth_accounts' })
@@ -73,7 +73,7 @@ export const getEthereumContractWithSigner = async (skipAccountsCheck = false) =
       throw new Error('Please connect your wallet first')
     }
   }
-
+  
   const provider = new ethers.BrowserProvider(ethereum)
   const signer = await provider.getSigner()
   const contract = new ethers.Contract(address.CryptoMart, abi.abi, signer)
@@ -556,81 +556,9 @@ const requestToBecomeVendor = async (
     await tx.wait()
     console.log('Seller registration completed!')
   } catch (error) {
+    console.log(error);
     reportError(error)
-    return Promise.reject(error)
-  }
-}
-
-// Wagmi-compatible vendor registration (no MetaMask direct calls)
-const requestToBecomeVendorWithWagmi = async (
-  params: SellerRegistrationParams,
-  walletClient: any,
-  userAddress: string
-): Promise<void> => {
-  try {
-    console.log('Using wagmi client for vendor registration')
-    console.log('User address:', userAddress)
-
-    // Check if user is already registered
-    const contract = await getEthereumContract()
-
-    try {
-      const userData = await contract.getUser(userAddress)
-      if (!userData[0] || userData[0] === '') {
-        console.log('User not registered, registering first...')
-
-        // Use wagmi's writeContract for user registration
-        const userTxHash = await walletClient.writeContract({
-          address: address.CryptoMart as `0x${string}`,
-          abi: abi.abi,
-          functionName: 'registerUser',
-          args: [params.businessName, params.email, params.logo || ''],
-        })
-
-        console.log('User registration transaction:', userTxHash)
-        // Wait for confirmation - we'll assume it succeeds for now
-        await new Promise((resolve) => setTimeout(resolve, 2000))
-        console.log('User registration completed')
-      }
-    } catch (error) {
-      console.log('User not found, registering first...')
-
-      // Use wagmi's writeContract for user registration
-      const userTxHash = await walletClient.writeContract({
-        address: address.CryptoMart as `0x${string}`,
-        abi: abi.abi,
-        functionName: 'registerUser',
-        args: [params.businessName, params.email, params.logo || ''],
-      })
-
-      console.log('User registration transaction:', userTxHash)
-      // Wait for confirmation - we'll assume it succeeds for now
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-      console.log('User registration completed')
-    }
-
-    console.log('Registering as seller...')
-
-    // Use wagmi's writeContract for seller registration
-    const txHash = await walletClient.writeContract({
-      address: address.CryptoMart as `0x${string}`,
-      abi: abi.abi,
-      functionName: 'registerSeller',
-      args: [
-        params.businessName,
-        params.description,
-        params.email,
-        params.phone,
-        params.logo || '',
-      ],
-    })
-
-    console.log('Seller registration transaction:', txHash)
-    console.log('Seller registration completed!')
-  } catch (error) {
-    console.error('Wagmi registration error:', error)
-    reportError(error)
-    return Promise.reject(error)
+    return Promise.reject(error);
   }
 }
 
@@ -1005,7 +933,6 @@ export {
   getPendingSellers,
   getSellerStatus,
   requestToBecomeVendor,
-  requestToBecomeVendorWithWagmi,
   getSellerProfile,
   getCategory,
   registerAndVerifyContractOwner,
