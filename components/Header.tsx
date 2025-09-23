@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import ConnectBtn from './ConnectBtn'
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -185,9 +186,11 @@ const Header: React.FC = () => {
                           key={item.id}
                           className="flex items-center gap-3 py-2 border-b border-white/10"
                         >
-                          <img
+                          <Image
                             src={item.images[0] || '/placeholder.png'}
                             alt={item.name}
+                            width={48}
+                            height={48}
                             className="w-12 h-12 object-cover rounded-lg"
                           />
                           <div className="flex-1">
