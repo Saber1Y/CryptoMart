@@ -1,69 +1,52 @@
 'use client'
 
-import * as React from 'react'
-import { WagmiConfig, configureChains, createConfig } from 'wagmi'
-import { RainbowKitProvider, connectorsForWallets, darkTheme } from '@rainbow-me/rainbowkit'
-import { metaMaskWallet, injectedWallet } from '@rainbow-me/rainbowkit/wallets'
-import { sepolia, hardhat, localhost, baseSepolia } from 'wagmi/chains'
-import { publicProvider } from 'wagmi/providers/public'
-import { alchemyProvider } from 'wagmi/providers/alchemy'
+import React, { type ReactNode } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { createAppKit } from '@reown/appkit/react'
+import { cookieToInitialState, WagmiProvider, type Config } from 'wagmi'
+import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
+import { wagmiAdapter, projectId, networks as importedNetworks, customRpcUrls } from '@/config'
 
-// Configure Anvil network (same as localhost but with specific config)
-const anvilNetwork = {
-  ...localhost,
-  id: 31337,
-  name: 'Anvil Local',
-  network: 'anvil',
-  rpcUrls: {
-    default: {
-      http: ['http://127.0.0.1:8545'],
-    },
-    public: {
-      http: ['http://127.0.0.1:8545'],
-    },
-  },
+const queryClient = new QueryClient()
+
+const metadata = {
+  name: 'IntentSwap',
+  description: 'Swap crypto with just words. AI-powered token transfers on Somnia.',
+  url: 'http://localhost:3000/',
+  icons: ['https://intentswap.com/logo.svg'],
 }
 
-const { chains, publicClient } = configureChains(
-  [anvilNetwork, localhost, hardhat], // Focus on local networks for development
-  [publicProvider()] // Use only public provider for simplicity
-)
+const networks = importedNetworks as [(typeof importedNetworks)[0], ...typeof importedNetworks]
 
-// Use a fallback projectId or make it optional for local development
-const projectId = process.env.NEXT_PUBLIC_PROJECT_ID || 'local-development'
-
-const connectors = connectorsForWallets([
-  {
-    groupName: 'Development',
-    wallets: [
-      injectedWallet({ chains }), // For MetaMask without WalletConnect
-      // Only include WalletConnect-based wallets if we have a valid project ID
-      ...(process.env.NEXT_PUBLIC_PROJECT_ID && process.env.NEXT_PUBLIC_PROJECT_ID !== 'local-development' 
-        ? [metaMaskWallet({ projectId, chains })] 
-        : [])
-    ],
+const modal = createAppKit({
+  adapters: [wagmiAdapter],
+  projectId: projectId ?? '',
+  networks,
+  defaultNetwork: networks[0],
+  metadata,
+  customRpcUrls, // pass same override
+  features: {
+    analytics: true,
   },
-])
-
-const wagmiConfig = createConfig({
-  autoConnect: true,
-  connectors,
-  publicClient,
+  // optionally: allowUnsupportedChain: true
 })
 
-const demoAppInfo = {
-  appName: 'CryptoMart - Decentralized E-commerce Platform',
+interface Props {
+  children: ReactNode
+  cookies: string | null
 }
 
-export function Providers({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = React.useState(false)
-  React.useEffect(() => setMounted(true), [])
+export default function ContextProvider({ children, cookies }: Props) {
+  const initialState = cookieToInitialState(wagmiAdapter.wagmiConfig as Config, cookies)
 
   return (
-    <WagmiConfig config={wagmiConfig}>
-      <RainbowKitProvider theme={darkTheme()} chains={chains} appInfo={demoAppInfo}>
-        {mounted && children}
-      </RainbowKitProvider>
-    </WagmiConfig>
+    <WagmiProvider config={wagmiAdapter.wagmiConfig as Config} initialState={initialState}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider chains={networks}>{children}</RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   )
 }
+
+// export modal if needed
+export { modal }

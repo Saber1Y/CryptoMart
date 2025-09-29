@@ -1,6 +1,7 @@
 import Header from '@/components/Header'
 import '@/styles/global.css'
-import { Providers } from '@/services/provider'
+// import { Providers } from '@/services/provider'
+import ContextProvider from '@/services/provider-backup'
 import { AppProps } from 'next/app'
 import { useEffect, useState } from 'react'
 import { ToastContainer } from 'react-toastify'
@@ -23,9 +24,9 @@ export default function App({ Component, pageProps }: AppProps) {
     return null
   } else {
     return (
-      <CartProvider>
-        <WishlistProvider>
-          <Providers>
+      <ContextProvider cookies={pageProps.cookies || null}>
+        <CartProvider>
+          <WishlistProvider>
             <div
               className="min-h-screen flex flex-col text-white w-full overflow-x-hidden
               bg-gradient-to-b from-black via-[#111111] to-black"
@@ -48,9 +49,9 @@ export default function App({ Component, pageProps }: AppProps) {
               />
               {!router.pathname.includes('/dashboard') && <Footer />}
             </div>
-          </Providers>
-        </WishlistProvider>
-      </CartProvider>
+          </WishlistProvider>
+        </CartProvider>
+      </ContextProvider>
     )
   }
 }
