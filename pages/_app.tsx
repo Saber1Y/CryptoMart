@@ -1,6 +1,5 @@
 import Header from '@/components/Header'
 import '@/styles/global.css'
-// import { Providers } from '@/services/provider'
 import ContextProvider from '@/services/provider-backup'
 import { AppProps } from 'next/app'
 import { useEffect, useState } from 'react'

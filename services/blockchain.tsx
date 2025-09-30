@@ -15,7 +15,6 @@ import {
   ProductParams,
 } from '@/utils/type.dt'
 
-
 // Utility functions
 export const toWei = (num: number): bigint => {
   try {
@@ -61,23 +60,24 @@ export const getReadOnlyContract = () => {
 }
 
 // Get contract with signer for writing operations when wagmi address is available
-export const getEthereumContractWithSigner = async (skipAccountsCheck = false) => {
+export const getEthereumContractWithSigner = async (userAddress: string) => {
   if (!ethereum) {
     throw new Error('Please install a wallet provider')
   }
-  
-  if (!skipAccountsCheck) {
-    // Check if accounts are already available (don't force request)
-    const accounts = await ethereum.request({ method: 'eth_accounts' })
-    if (accounts.length === 0) {
-      throw new Error('Please connect your wallet first')
-    }
-  }
-  
+  console.log('getEthereumContractWithSigner called with userAddress:', userAddress)
+  console.log('ethereum object:', ethereum)
   const provider = new ethers.BrowserProvider(ethereum)
-  const signer = await provider.getSigner()
-  const contract = new ethers.Contract(address.CryptoMart, abi.abi, signer)
-  return contract
+  console.log('provider:', provider)
+  try {
+    const signer = await provider.getSigner(userAddress)
+    console.log('signer:', signer)
+    const contract = new ethers.Contract(address.CryptoMart, abi.abi, signer)
+    console.log('contract:', contract)
+    return contract
+  } catch (err) {
+    console.error('Error getting signer:', err)
+    throw err
+  }
 }
 
 // Product Management Functions
@@ -494,40 +494,24 @@ const getSellerStatus = async (seller: string): Promise<SellerStatus> => {
 
 const requestToBecomeVendor = async (
   params: SellerRegistrationParams,
-  userAddress?: string
+  userAddress: string
 ): Promise<void> => {
-  if (!ethereum) {
-    reportError('Please install a wallet provider')
-    return Promise.reject(new Error('Browser provider not found'))
-  }
-
   try {
-    // If we have userAddress from wagmi, skip MetaMask account checks
-    const contract = await getEthereumContractWithSigner(!!userAddress)
+    // Get contract with signer (assume wallet is connected and address is valid)
+    const contract = await getEthereumContractWithSigner(userAddress)
+    const address = userAddress
+    console.log('Using wagmi address:', address)
 
-    // Get user address - either from parameter or from ethereum
-    let address: string
-    if (userAddress) {
-      address = userAddress
-      console.log('Using wagmi address:', address)
-    } else {
-      const accounts = await ethereum.request({ method: 'eth_accounts' })
-      if (accounts.length === 0) {
-        throw new Error('Please connect your wallet first')
-      }
-      address = accounts[0]
-      console.log('Using MetaMask address:', address)
-    }
-
+    // Check if user is registered
     try {
       const userData = await contract.getUser(address)
       if (!userData[0] || userData[0] === '') {
         // Empty name means not registered
         console.log('User not registered, registering first...')
         const userTx = await contract.registerUser(
-          params.businessName, // Use business name as user name
+          params.businessName,
           params.email,
-          params.logo || '' // Use logo as avatar
+          params.logo || ''
         )
         await userTx.wait()
         console.log('User registration completed')
@@ -556,9 +540,9 @@ const requestToBecomeVendor = async (
     await tx.wait()
     console.log('Seller registration completed!')
   } catch (error) {
-    console.log(error);
+    console.log(error)
     reportError(error)
-    return Promise.reject(error);
+    return Promise.reject(error)
   }
 }
 

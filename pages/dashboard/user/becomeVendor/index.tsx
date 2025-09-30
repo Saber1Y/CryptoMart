@@ -97,12 +97,10 @@ const BecomeVendor = () => {
             <p className="text-gray-400 text-lg mb-8">
               You need to connect your wallet to become a vendor
             </p>
-            <ConnectButton />
-
-            {/* Anvil Account Info for local development */}
-            <div className="mt-8">
-              <AnvilAccountInfo />
-            </div>
+            <span className="text-center mx-auto block w-fit">
+              {' '}
+              <ConnectButton />
+            </span>
           </div>
         </div>
       </div>
@@ -168,7 +166,7 @@ const BecomeVendor = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!address) {
+    if (!address || !isConnected) {
       toast.error('Please connect your wallet first')
       return
     }
