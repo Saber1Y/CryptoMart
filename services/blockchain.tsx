@@ -494,6 +494,7 @@ const getSellerStatus = async (seller: string): Promise<SellerStatus> => {
 
 const requestToBecomeVendor = async (
   params: SellerRegistrationParams,
+  walletClient: any,
   userAddress: string
 ): Promise<void> => {
   try {

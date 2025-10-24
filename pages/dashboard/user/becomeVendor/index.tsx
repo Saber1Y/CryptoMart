@@ -19,10 +19,11 @@ import {
   XCircle,
 } from 'lucide-react'
 import withUserLayout from '@/components/hoc/withUserLayout'
+import { useSigner } from '@/hooks/useSigner'
 
 const BecomeVendor = () => {
   const router = useRouter()
-  const { address, isConnected } = useAccount()
+  // const { address, isConnected } = useAccount()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [loading, setLoading] = useState(true)
   const [sellerStatus, setSellerStatus] = useState<SellerStatus | null>(null)
@@ -33,6 +34,7 @@ const BecomeVendor = () => {
     phone: '',
     logo: '',
   })
+  const { walletClient, address, isConnected } = useSigner()
 
   useEffect(() => {
     const checkSellerStatus = async () => {
@@ -173,7 +175,7 @@ const BecomeVendor = () => {
 
     try {
       setIsSubmitting(true)
-      await requestToBecomeVendor(formData, address)
+      await requestToBecomeVendor(formData, walletClient, address)
       toast.success('Vendor registration submitted successfully!')
       router.push('/dashboard/user')
     } catch (error: any) {
