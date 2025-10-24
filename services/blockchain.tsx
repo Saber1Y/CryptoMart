@@ -14,6 +14,7 @@ import {
   SellerData,
   ProductParams,
 } from '@/utils/type.dt'
+import { waitForTransactionReceipt } from 'wagmi/actions'
 
 // Utility functions
 export const toWei = (num: number): bigint => {
@@ -59,6 +60,14 @@ export const getReadOnlyContract = () => {
   return contract
 }
 
+export const getEthereumContractWithWalletClient = (walletClient: any) => {
+  if (!walletClient) {
+    throw new Error('No wallet client available')
+  }
+  // walletClient acts as the signer/provider for contract interactions
+  return new ethers.Contract(address.CryptoMart, abi.abi, walletClient)
+}
+
 // Get contract with signer for writing operations when wagmi address is available
 export const getEthereumContractWithSigner = async (userAddress: string) => {
   if (!ethereum) {
@@ -69,10 +78,10 @@ export const getEthereumContractWithSigner = async (userAddress: string) => {
   const provider = new ethers.BrowserProvider(ethereum)
   console.log('provider:', provider)
   try {
-    const signer = await provider.getSigner(userAddress)
-    console.log('signer:', signer)
-    const contract = new ethers.Contract(address.CryptoMart, abi.abi, signer)
-    console.log('contract:', contract)
+    // const signer = await provider.getSigner(userAddress)
+    // console.log('signer:', signer)
+    const contract = getEthereumContractWithWalletClient(walletClient)
+    // console.log('contract:', contract)
     return contract
   } catch (err) {
     console.error('Error getting signer:', err)
@@ -499,22 +508,25 @@ const requestToBecomeVendor = async (
 ): Promise<void> => {
   try {
     // Get contract with signer (assume wallet is connected and address is valid)
-    const contract = await getEthereumContractWithSigner(userAddress)
-    const address = userAddress
-    console.log('Using wagmi address:', address)
+    const contract = getEthereumContractWithWalletClient(walletClient)
+    const userAddr = userAddress
+    console.log('Using wagmi address:', userAddr)
 
     // Check if user is registered
     try {
-      const userData = await contract.getUser(address)
+      const userData = await contract.getUser(userAddr)
       if (!userData[0] || userData[0] === '') {
         // Empty name means not registered
         console.log('User not registered, registering first...')
-        const userTx = await contract.registerUser(
-          params.businessName,
-          params.email,
-          params.logo || ''
-        )
-        await userTx.wait()
+        const txHash = await walletClient.sendTransaction({
+          to: address.CryptoMart,
+          data: contract.interface.encodeFunctionData('registerUser', [
+            params.businessName,
+            params.email,
+            params.logo || '',
+          ]),
+        })
+        await waitForTransactionReceipt({ hash: txHash }, walletClient)
         console.log('User registration completed')
       }
     } catch (error) {
