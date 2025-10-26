@@ -15,6 +15,7 @@ import {
   ProductParams,
 } from '@/utils/type.dt'
 import { waitForTransactionReceipt } from 'wagmi/actions'
+import { wagmiConfig } from '@/config'
 
 // Utility functions
 export const toWei = (num: number): bigint => {
@@ -526,18 +527,21 @@ const requestToBecomeVendor = async (
             params.logo || '',
           ]),
         })
-        await waitForTransactionReceipt({ hash: txHash }, walletClient)
+        await waitForTransactionReceipt(txHash, wagmiConfig)
         console.log('User registration completed')
       }
     } catch (error) {
       // If getUser fails, user is not registered, so register them
       console.log('User not found, registering first...')
-      const userTx = await contract.registerUser(
-        params.businessName,
-        params.email,
-        params.logo || ''
-      )
-      await userTx.wait()
+      const txHash = await walletClient.sendTransaction({
+        to: address.CryptoMart,
+        data: contract.interface.encodeFunctionData('registerUser', [
+          params.businessName,
+          params.email,
+          params.logo || '',
+        ]),
+      })
+      await waitForTransactionReceipt(txHash, wagmiConfig)
       console.log('User registration completed')
     }
 
