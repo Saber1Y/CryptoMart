@@ -527,7 +527,10 @@ const requestToBecomeVendor = async (
             params.logo || '',
           ]),
         })
-        await waitForTransactionReceipt(txHash, wagmiConfig)
+        await waitForTransactionReceipt(wagmiConfig, {
+          chainId: walletClient.chain.id,
+          hash: txHash,
+        })
         console.log('User registration completed')
       }
     } catch (error) {
@@ -541,7 +544,10 @@ const requestToBecomeVendor = async (
           params.logo || '',
         ]),
       })
-      await waitForTransactionReceipt(txHash, wagmiConfig)
+      await waitForTransactionReceipt(wagmiConfig, {
+        chainId: walletClient.chain.id,
+        hash: txHash,
+      })
       console.log('User registration completed')
     }
 

@@ -97,3 +97,9 @@ export const wagmiAdapter = new WagmiAdapter({
 })
 
 export const wagmiConfig = wagmiAdapter.wagmiConfig
+
+export { getWalletClient, waitForTransactionReceipt } from '@wagmi/core'
+// Usage:
+// import { getWalletClient, waitForTransactionReceipt, wagmiConfig } from '../config'
+// const walletClient = await getWalletClient({ chainId }, wagmiConfig)
+// const receipt = await waitForTransactionReceipt({ chainId, hash }, wagmiConfig)

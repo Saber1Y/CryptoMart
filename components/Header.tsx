@@ -7,11 +7,13 @@ import { CgMenuLeft } from 'react-icons/cg'
 import { FaTimes } from 'react-icons/fa'
 import { useAccount } from 'wagmi'
 import { HiOutlineShoppingBag } from 'react-icons/hi'
-import { BiStore } from 'react-icons/bi'
 import { Menu, Transition } from '@headlessui/react'
-import { FiChevronDown, FiUser, FiPackage, FiSettings } from 'react-icons/fi'
+import { FiChevronDown, FiUser } from 'react-icons/fi'
 import { useCart } from '@/contexts/CartContext'
 import { fromWei, getEthereumContract, getReadOnlyContract } from '@/services/blockchain'
+import { useReadContract } from 'wagmi'
+import abi from '@/artifacts/contracts/CryptoMartProxy.sol/CryptoMart.json'
+import contractAddress from '@/contracts/contractAddresses.json'
 
 const Header: React.FC = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false)
@@ -28,21 +30,35 @@ const Header: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  const { data: owner } = useReadContract({
+    address: contractAddress.CryptoMart as `0x${string}`, 
+    abi: abi.abi,
+    functionName: 'owner',
+  })
+
   useEffect(() => {
-    const checkDeployer = async () => {
-      if (address) {
-        try {
-          const contract = getReadOnlyContract()
-          const owner = await contract.owner()
-          setIsDeployer(owner.toLowerCase() === address.toLowerCase())
-        } catch (error) {
-          console.error('Error checking deployer:', error)
-          setIsDeployer(false)
-        }
-      }
+    if (typeof owner === 'string' && typeof address === 'string') {
+      setIsDeployer(owner.toLowerCase() === address.toLowerCase())
+    } else {
+      setIsDeployer(false)
     }
-    checkDeployer()
-  }, [address])
+  }, [owner, address])
+
+  // useEffect(() => {
+  //   const checkDeployer = async () => {
+  //     if (address) {
+  //       try {
+  //         const contract = getReadOnlyContract()
+  //         const owner = await contract.owner()
+  //         setIsDeployer(owner.toLowerCase() === address.toLowerCase())
+  //       } catch (error) {
+  //         console.error('Error checking deployer:', error)
+  //         setIsDeployer(false)
+  //       }
+  //     }
+  //   }
+  //   checkDeployer()
+  // }, [address])
 
   const navLinks = [
     { href: '/', label: 'Home' },
