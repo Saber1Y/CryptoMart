@@ -560,7 +560,10 @@ const requestToBecomeVendor = async (
       params.phone,
       params.logo
     )
-    await tx.wait()
+    await waitForTransactionReceipt(wagmiConfig, {
+      chainId: walletClient.chain.id,
+      hash: tx.hash,
+    })
     console.log('Seller registration completed!')
   } catch (error) {
     console.log(error)
